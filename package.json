@@ -1,0 +1,16 @@
+{
+  "name": "@keegancsmith/linear-issues-mcp-server",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "MCP server for Linear issues read-only access",
+  "main": "linear-issues-mcp-server.js",
+  "bin": {
+    "linear-issues-mcp-server": "linear-issues-mcp-server.js"
+  },
+  "author": "Keegan Carruthers-Smith <keegan.csmith@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.2.0",
+    "zod": "^3.22.4"
+  }
+}
