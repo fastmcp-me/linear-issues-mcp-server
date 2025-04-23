@@ -18,12 +18,6 @@ The server provides two tools:
 
 No installation is needed if you use npx. Just make sure you have Node.js and npm installed.
 
-Alternatively, you can clone this repository and run:
-
-```bash
-npm install
-```
-
 ## Getting a Linear API Token
 
 You can obtain a Linear API token in two ways:
@@ -62,7 +56,6 @@ Example configuration:
 ```
 
 3. Restart Claude for Desktop
-4. The API token is securely stored in the environment variable and doesn't need to be included in your prompts
 
 ## Example Usage
 
@@ -79,23 +72,6 @@ What are all the comments on the issue at https://linear.app/company/issue/ENG-1
 ```
 
 Claude can use `linear_get_issue_with_comments` to fetch the full issue details including comments.
-
-## Security Considerations
-
-This server requires your Linear API token to function. This token provides read access to your Linear issues. The token is stored as an environment variable in your Claude for Desktop configuration, which keeps it secure and out of the chat history. This approach is much more secure than passing the token in a URL or as a parameter. Still, be cautious about sharing access to sensitive project information.
-
-## Potential Additional Features
-
-Possible enhancements for future versions:
-
-- Search functionality for issues by query or filter criteria
-- Team/project information access
-- Issue history and timeline access
-- Related issues lookup
-- Issue templates access
-- Status transition information
-- User/assignee details
-- Metrics and analytics for issues
 
 ## License
 
