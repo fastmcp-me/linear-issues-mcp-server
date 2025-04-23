@@ -107,12 +107,12 @@ const issueQuery = `
 `;
 
 /**
- * Tool handler for linear_get_issue - Fetches a single Linear issue by URL or ID
- * @param {Object} params - Parameters from the tool call
- * @param {string} params.issue - Linear issue URL or ID
+ * Fetches a Linear issue with optional comments
+ * @param {string} issue - Linear issue URL or ID
+ * @param {boolean} includeComments - Whether to include comments
  * @returns {Object} - Response object with issue details or error
  */
-async function getLinearIssue({ issue }) {
+async function fetchLinearIssue(issue, includeComments = false) {
   // Get access token from environment variable
   const accessToken = process.env.LINEAR_API_TOKEN;
 
@@ -149,7 +149,7 @@ async function getLinearIssue({ issue }) {
 
     const data = await linearApiRequest(
       issueQuery,
-      { id: issueId, includeComments: false },
+      { id: issueId, includeComments },
       accessToken
     );
 
@@ -167,7 +167,7 @@ async function getLinearIssue({ issue }) {
 
     const issueData = data.issue;
 
-    // Format the issue data for display
+    // Format the base issue data
     const formattedIssue = {
       identifier: issueData.identifier,
       title: issueData.title,
@@ -182,6 +182,20 @@ async function getLinearIssue({ issue }) {
       updatedAt: new Date(issueData.updatedAt).toISOString(),
     };
 
+    // Add comments if requested
+    if (includeComments && issueData.comments) {
+      const formattedComments = (issueData.comments.nodes || []).map(
+        (comment) => ({
+          body: comment.body,
+          author: comment.user
+            ? comment.user.displayName || comment.user.name
+            : "Unknown",
+          createdAt: new Date(comment.createdAt).toISOString(),
+        })
+      );
+      formattedIssue.comments = formattedComments;
+    }
+
     return {
       content: [
         {
@@ -195,12 +209,24 @@ async function getLinearIssue({ issue }) {
       content: [
         {
           type: "text",
-          text: `Error fetching Linear issue: ${error.message}`,
+          text: `Error fetching Linear issue${
+            includeComments ? " with comments" : ""
+          }: ${error.message}`,
         },
       ],
       isError: true,
     };
   }
+}
+
+/**
+ * Tool handler for linear_get_issue - Fetches a single Linear issue by URL or ID
+ * @param {Object} params - Parameters from the tool call
+ * @param {string} params.issue - Linear issue URL or ID
+ * @returns {Object} - Response object with issue details or error
+ */
+async function getLinearIssue({ issue }) {
+  return fetchLinearIssue(issue, false);
 }
 
 // Register the linear_get_issue tool
@@ -232,105 +258,7 @@ server.tool(
  * @returns {Object} - Response object with issue details and comments or error
  */
 async function getLinearIssueWithComments({ issue }) {
-  // Get access token from environment variable
-  const accessToken = process.env.LINEAR_API_TOKEN;
-
-  if (!accessToken) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: "Error: No Linear API token found in environment. Set the LINEAR_API_TOKEN environment variable.",
-        },
-      ],
-      isError: true,
-    };
-  }
-  try {
-    let issueId = issue;
-
-    // Check if it's a URL and extract the ID if it is
-    if (issue.startsWith("http")) {
-      const parsedId = parseIssueIDFromURL(issue);
-      if (!parsedId) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error: Invalid Linear issue URL: ${issue}`,
-            },
-          ],
-          isError: true,
-        };
-      }
-      issueId = parsedId;
-    }
-
-    const data = await linearApiRequest(
-      issueQuery,
-      { id: issueId, includeComments: true },
-      accessToken
-    );
-
-    if (!data.issue) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error: Linear issue not found: ${issue}`,
-          },
-        ],
-        isError: true,
-      };
-    }
-
-    const issueData = data.issue;
-
-    // Format the issue data for display including comments
-    const formattedComments = (issueData.comments?.nodes || []).map(
-      (comment) => ({
-        body: comment.body,
-        author: comment.user
-          ? comment.user.displayName || comment.user.name
-          : "Unknown",
-        createdAt: new Date(comment.createdAt).toISOString(),
-      })
-    );
-
-    const formattedIssue = {
-      identifier: issueData.identifier,
-      title: issueData.title,
-      url: issueData.url,
-      description: issueData.description || "",
-      state: issueData.state?.name || "",
-      priority: issueData.priorityLabel || "",
-      assignee: issueData.assignee
-        ? issueData.assignee.displayName || issueData.assignee.name
-        : "Unassigned",
-      createdAt: new Date(issueData.createdAt).toISOString(),
-      updatedAt: new Date(issueData.updatedAt).toISOString(),
-      comments: formattedComments,
-    };
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(formattedIssue, null, 2),
-        },
-      ],
-    };
-  } catch (error) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Error fetching Linear issue with comments: ${error.message}`,
-        },
-      ],
-      isError: true,
-    };
-  }
+  return fetchLinearIssue(issue, true);
 }
 
 // Register the linear_get_issue_with_comments tool
