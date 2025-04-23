@@ -44,7 +44,7 @@ Example configuration:
 ```json
 {
   "mcpServers": {
-    "linear-issues-mcp": {
+    "linear-issues": {
       "command": "npx",
       "args": ["-y", "@keegancsmith/linear-issues-mcp-server"],
       "env": {
